@@ -72,4 +72,73 @@
   </OnEscapePressed>
   </Scripts>
   </Frame>
+  
+  <!-- WIP, need to find some UI designer addon because HOLY FUCK this is painful -->
+  <Frame name="SimcCopyFrameMini" parent="UIParent" movable="true" enableMouse="true" inherits="DialogBoxFrame">
+  <Size>
+    <AbsDimension x="450" y="150"/>
+  </Size>
+  <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+    <BackgroundInsets>
+      <AbsInset left="5" right="5" top="5" bottom="5"/>
+    </BackgroundInsets>
+    <TileSize>
+      <AbsValue val="16"/>
+    </TileSize>
+    <EdgeSize>
+      <AbsValue val="16"/>
+    </EdgeSize>
+  </Backdrop>
+  <Layers>
+    <Layer level="ARTWORK">
+      <FontString name="SimcText" inherits="GameFontHighlight">
+        <Anchors>
+          <Anchor point="TOPLEFT">
+            <Offset>
+              <AbsDimension x="5" y="-5"/>
+            </Offset>
+          </Anchor>
+        </Anchors>
+      </FontString>
+    </Layer>
+  </Layers>
+  <Frames>
+    <ScrollFrame name="SimcCopyFrameMiniScroll" inherits="UIPanelScrollFrameTemplate" toplevel="true">
+      <Anchors>
+        <Anchor point="TOP">
+          <Offset>
+            <AbsDimension x="0" y="-30"/>
+          </Offset>
+        </Anchor>
+          <Anchor point="BOTTOM" relativeTo="SimcCopyFrameMiniButton" relativePoint="TOP">
+              <Offset>
+              <AbsDimension x="0" y="5"/>
+              </Offset>
+          </Anchor>          
+      </Anchors>
+      <Size>
+        <AbsDimension x="350" y="100"/>
+      </Size>
+      <ScrollChild>
+        <EditBox name="SimcCopyFrameMiniScrollText" letters="99999" multiLine="true" autoFocus="true" enableMouse="true">
+          <Size>
+            <AbsDimension x="330" y="80"/>
+          </Size>
+          <FontString inherits="ChatFontNormal"/>
+        </EditBox>
+      </ScrollChild>
+    </ScrollFrame>
+  </Frames>
+  <Scripts>
+  <OnMouseDown>
+          if (button == "LeftButton") then
+             self:StartMoving()
+          end
+  </OnMouseDown>
+  <OnMouseUp>
+      --noinspection GlobalSelf
+      self:StopMovingOrSizing()
+  </OnMouseUp>
+  </Scripts>
+  </Frame>
 </Ui>

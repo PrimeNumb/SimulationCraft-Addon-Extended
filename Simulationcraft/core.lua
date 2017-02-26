@@ -35,6 +35,7 @@ local artifactTable = Simulationcraft.ArtifactTable
 
 function Simulationcraft:OnInitialize()
   Simulationcraft:RegisterChatCommand('simc', 'PrintSimcProfile')
+  Simulationcraft:RegisterChatCommand('scItem', 'PrintTooltipItem')
 end
 
 function Simulationcraft:OnEnable()
@@ -269,6 +270,123 @@ function Simulationcraft:GetItemStrings()
   end
 
   return items
+end
+
+function Simulationcraft:PrintTooltipItem()
+
+	local name, itemLink = GameTooltip:GetItem()
+	local copyString = ""
+	
+	
+	-- shamelessly stolen and butchered
+	if itemLink then
+      local itemString = string.match(itemLink, "item:([%-?%d:]+)")
+      local itemSplit = {}
+
+      -- Split data into a table
+      for v in string.gmatch(itemString, "(%d*:?)") do
+        if v == ":" then
+          itemSplit[#itemSplit + 1] = 0
+        else
+          itemSplit[#itemSplit + 1] = string.gsub(v, ':', '')
+        end
+      end
+
+      -- Item id
+      local itemId = itemSplit[OFFSET_ITEM_ID]
+	  copyString = ',id=' .. itemId
+	  
+      -- Enchant
+      if tonumber(itemSplit[OFFSET_ENCHANT_ID]) > 0 then
+		copyString = copyString .. ',enchant_id=' .. itemSplit[OFFSET_ENCHANT_ID]
+      end
+
+      -- New style item suffix, old suffix style not supported
+      if tonumber(itemSplit[OFFSET_SUFFIX_ID]) ~= 0 then
+		copyString = copyString .. ',suffix=' .. itemSplit[OFFSET_SUFFIX_ID]
+      end
+
+      local flags = tonumber(itemSplit[OFFSET_FLAGS])
+
+      local bonuses = {}
+
+      for index=1, tonumber(itemSplit[OFFSET_BONUS_ID]) do
+        bonuses[#bonuses + 1] = itemSplit[OFFSET_BONUS_ID + index]
+      end
+
+      if #bonuses > 0 then
+		copyString = copyString .. ',bonus_id=' .. table.concat(bonuses, '/')
+      end
+
+      local rest_offset = OFFSET_BONUS_ID + #bonuses + 1
+
+      -- Upgrade level
+      if bit.band(flags, 4) == 4 then
+        local upgrade_id = tonumber(itemSplit[rest_offset])
+        if self.upgradeTable[upgrade_id] ~= nil and self.upgradeTable[upgrade_id] > 0 then
+		  copyString = copyString .. ',upgrade=' .. self.upgradeTable[upgrade_id]
+        end
+        rest_offset = rest_offset + 1
+      end
+
+      -- Artifacts use this
+      if bit.band(flags, 256) == 256 then
+        rest_offset = rest_offset + 1 -- An unknown field
+        local relic_str = ''
+        while rest_offset < #itemSplit do
+          local n_bonus_ids = tonumber(itemSplit[rest_offset])
+          rest_offset = rest_offset + 1
+
+          if n_bonus_ids == 0 then
+            relic_str = relic_str .. 0
+          else
+            for rbid = 1, n_bonus_ids do
+              relic_str = relic_str .. itemSplit[rest_offset]
+              if rbid < n_bonus_ids then
+                relic_str = relic_str .. ':'
+              end
+              rest_offset = rest_offset + 1
+            end
+          end
+
+          if rest_offset < #itemSplit then
+            relic_str = relic_str .. '/'
+          end
+        end
+
+        if relic_str ~= '' then
+		  copyString = copyString .. ',relic_id=' .. relic_str
+        end
+      end
+
+      -- Some leveling quest items seem to use this, it'll include the drop level of the item
+      if bit.band(flags, 512) == 512 then
+		copyString = copyString .. ',drop_level=' .. itemSplit[rest_offset]
+        rest_offset = rest_offset + 1
+      end
+
+      -- Gems
+      local gems = {}
+      for i=1, 4 do -- hardcoded here to just grab all 4 sockets
+        local _,gemLink = GetItemGem(itemLink, i)
+        if gemLink then
+          local gemDetail = string.match(gemLink, "item[%-?%d:]+")
+          gems[#gems + 1] = string.match(gemDetail, "item:(%d+):" )
+        elseif flags == 256 then
+          gems[#gems + 1] = "0"
+        end
+      end
+      if #gems > 0 then
+		copyString = copyString .. ',gem_id=' .. table.concat(gems, '/')
+      end
+    end
+	
+	SimcCopyFrameMini:Show()
+	SimcCopyFrameMiniScroll:Show()
+	SimcCopyFrameMiniScrollText:Show()
+	SimcCopyFrameMiniScrollText:SetText(copyString)
+	SimcCopyFrameMiniScrollText:HighlightText()
+  
 end
 
 -- This is the workhorse function that constructs the profile
